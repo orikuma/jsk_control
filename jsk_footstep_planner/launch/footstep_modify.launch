@@ -1,0 +1,13 @@
+<launch>
+  <node pkg="jsk_footstep_planner" type="footstep-modify.l" name="footstep_modify_node" output="screen"/>
+  <node pkg="nodelet" type="nodelet" name="footstep_manager" args="manager" />
+  <node pkg="nodelet" type="nodelet"
+        args="load jsk_topic_tools/Snapshot footstep_manager"
+        name="snapshot">
+    <remap from="~input" to="/footstep_marker/output/plan_result"/>
+    <remap from="~output" to="/footstep_modify/footstep"/>
+    <rosparam>
+      latch: false
+    </rosparam>
+  </node>
+</launch>  

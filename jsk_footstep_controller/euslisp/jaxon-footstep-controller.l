@@ -8,6 +8,7 @@
 (ros::roseus-add-msgs "nav_msgs")
 
 (setq *step-refine* (ros::get-param "~/use_step_refine"))
+(setq *walking-height* (ros::get-param "~/walking_height" nil))
 
 (load "package://jsk_footstep_controller/euslisp/util.l")
 ;; (load "package://jsk_robot_utils/euslisp/robot-interface-utils.l")
@@ -18,6 +19,121 @@
 (setq *plane-projection* (ros::get-param "~/plane_projection" nil))
 (setq *planes* nil)
 (setq *wait-for-plane* t)
+
+;; (defun body-down (&key (robot *robot*) (z-pos 0) (crotch-pitch 0) (real t)) ;; 腰を下げる
+;;   (send robot :reset-pose)
+;;   (send robot :legs :move-end-pos (float-vector 0 0 z-pos) :local) ;;足が上がるから腰が下がる ;;#f(0 0 z-pos)はエラーをはく
+;;   (send robot :legs :crotch-p :joint-angle crotch-pitch :relative t)
+;;   (send robot :fix-leg-to-coords (make-coords)) ;makecoordsは何もないと0 0 0
+;;   ;; setq *a* (make-coords :pos #f(100 100 100) :rpy (list 1 2 3))
+;;   ;; send robot :fix-leg-to-coords *a*
+;;   (send robot :move-centroid-on-foot :both '(:rleg :lleg))
+;;   ;;(objects (list *robot*))
+;;   (if real
+;;       (send *ri* :angle-vector (send robot :angle-vector) 5000)
+;;       (send *ri* :wait-interpolation)
+;;       (unix:sleep 5)
+;;     )
+;;   )
+
+(defun set-gait-generator-param-cb
+  (req)
+  (let ((res (send req :response)))
+    ;; for toe step gait 
+    (send *ri* :set-gait-generator-param
+             :toe-angle 30 :heel-angle 5
+             :toe-heel-phase-ratio #f(0.02 0.28 0.2 0.0 0.2 0.25 0.05)
+             :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
+             :swing-trajectory-delay-time-offset 0.20
+             :swing-trajectory-final-distance-weight 3.0
+             :default-orbit-type :stair
+             :default-step-time 1.5
+             :default-double-support-ratio 0.2
+             :default-step-height 0.05)
+    ;; for kojio base link height modification
+    (send *ri* :stop-st)
+    (unix::sleep 3)
+    (send *ri* :set-st-param
+        :use-limb-stretch-avoidance t ;; 腰を脚長似あわせて下げるかどうか
+        :limb-length-margin #f(0.145 0.145 0.145 0.145) ;; 伸びきりの脚長からどのくらいマージンを取るか #f(右足 左足 右腕 左腕)
+        :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; 腰変化の速度リミット
+        )
+    (unix::sleep 3)
+    (send *ri* :start-st)
+    res
+    )
+  )
+
+(defun set-footstep-and-base-height-sequence (fsl)
+  ;; (send *ri* :set-st-param
+  ;;       :use-limb-stretch-avoidance t ;; 腰を脚長似あわせて下げるかどうか
+  ;;       :limb-length-margin #f(0.145 0.145 0.145 0.145) ;; 伸びきりの脚長からどのくらいマージンを取るか #f(右足 左足 右腕 左腕)
+  ;;       :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; 腰変化の速度リミット
+  ;;       )
+  (let ((default-step-time (send (send *ri* :get-gait-generator-param) :default_step_time))
+        avs tms)
+    (setq avs (generate-base-pose-list fsl :default-pose (send *ri* :state :reference-vector)))
+    (setq tms (make-list (length avs) :initial-element (* 1e3 default-step-time)))
+
+    ;; (send *ri* :start-log)
+    ;;(send *ri* :set-foot-steps *fsl*)
+    ;; (send *ri* :set-foot-steps-with-base-height fsl avs tms)
+    ;; (send *ri* :save-log "/tmp/dansa")
+
+    (send *ri* :set-foot-steps-no-wait fsl)
+    (send *ri* :angle-vector-sequence avs tms)
+
+    ))
+
+(defun generate-base-pose-list (footstep-coords &key (step-threshold 100.0)
+                                             (robot *robot*)
+                                             (default-pose (send robot :reset-pose)))
+  (let ((step-list
+         (mapcar #'(lambda (prev-fs fs)
+                     (let ((cds (send prev-fs :transformation fs)))
+                       (pprint cds)
+                       (> (abs (elt (send cds :worldpos) 2)) step-threshold)))
+                 (butlast footstep-coords) (cdr footstep-coords))) ;; list of "is next step is step up/down?" 
+        pos len)
+    (setq len (length step-list))
+    ;; overwrite "t" in step-list to 0 and prev/next 2 steps to -2, -1, 1, 2 for sequential base-pose modification
+    (while (setq pos (position t step-list))
+      (when (>= (- pos 2) 0)
+        (setf (elt step-list (- pos 2)) -2))
+      (when (>= (- pos 1) 0)
+        (setf (elt step-list (- pos 1)) -1))
+      (setf (elt step-list pos) 0)
+      (when (< (+ pos 1) len)
+        (setf (elt step-list (+ pos 1)) 1))
+      (when (< (+ pos 2) len)
+        (setf (elt step-list (+ pos 2)) 2))
+      )
+    (pprint step-list)
+    ;; overwrite step-list: each numbers -> appropriate modified base angle vectors, nil -> default-pose
+    (mapcar #'(lambda (pos)
+                (if pos
+                    (let ()
+                      (send robot :angle-vector default-pose)
+                      (send robot :fix-leg-to-coords (make-coords))
+                      (case pos ;; difference of base link height is constant
+                        (-2
+                         (send robot :legs :move-end-pos (float-vector 0 0 20)))
+                        (-1
+                         (send robot :legs :move-end-pos (float-vector 0 0 50)))
+                        (0
+                         (send robot :legs :move-end-pos (float-vector 0 0 80)))
+                        (1
+                         (send robot :legs :move-end-pos (float-vector 0 0 80)))
+                        (2
+                         (send robot :legs :move-end-pos (float-vector 0 0 50)))
+                        )
+                      (send robot :move-centroid-on-foot :both (list :rleg :lleg))
+                      (send robot :angle-vector)
+                      )
+                  default-pose))
+            step-list)
+    ))
+
 
 (defun planes-cb (msg)
   (let ((polygons (send msg :polygons)))
@@ -47,13 +163,16 @@
             (setq *planes* faces)
             )))))
 
-(defun walking-pose (&key (real t) (height 40))
-  (send *robot* :reset-manip-pose)
-  (send *robot* :legs :move-end-pos (float-vector 0 0 height))
-  (when real
-    ;; (send *ri* :set-gait-generator-param :default-orbit-type :stair)
-    (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
-    (send *ri* :wait-interpolation)
+(defun walking-pose (original-av &key (real t) (height 40))
+  (when (numberp height)
+    ;; TODO: this line assumes that height of base_link does not changed from initial posture
+    (send *robot* :angle-vector original-av)
+    (send *robot* :legs :move-end-pos (float-vector 0 0 height)) 
+    (when real
+      ;; (send *ri* :set-gait-generator-param :default-orbit-type :stair)
+      (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
+      (send *ri* :wait-interpolation)
+      )
     )
   )
 #|
@@ -103,8 +222,10 @@
 (setq *current-steps* nil)
 (setq *wait-until* nil)
 (setq *appending-offset* 2)
+(setq *original-av* nil)
 ;;(setq *cntr* 0)
 (defun execute-cb2 (server goal)
+  ;; first set-foot-steps
   (when (null *current-steps*)
     (let ((footstep-coords (footstep-array->coords (send goal :goal :footstep))))
       (when *debug*
@@ -123,7 +244,10 @@
         )
       (pprint "new steps:")
       (print-readable-coords footstep-coords)
-      (send *ri* :set-foot-steps-no-wait footstep-coords)
+      ;; (setq *original-av* (send *ri* :state :potentio-vector))
+      ;; (walking-pose *original-av* :real t :height *walking-height*)
+      ;; (send *ri* :set-foot-steps-no-wait footstep-coords)
+      (set-footstep-and-base-height-sequence footstep-coords) ;; base link height should be set only once at first :set-foot-steps
       (setq *current-steps* footstep-coords))
     (ros::ros-info "execute-cb: receive new steps ~D" (length *current-steps*))
     (return-from execute-cb2))
@@ -206,6 +330,9 @@
     (unless (car ret)
       (setq *current-steps* nil)
       (setq *wait-until* nil)
+      ;; (when *original-av*
+      ;;   (send *ri* :angle-vector *original-av* 3000) ;; TODO: consider the case that execute footstep is not completed
+      ;;   )
       (send server :set-succeeded (send server :result))
       (return-from execute-cb2)
       )
@@ -227,7 +354,7 @@
                      (>= (cadr ret) *wait-until*)))
         (setq ret (send *ri* :get-remaining-foot-step-sequence-current-index))
         (pprint (list 'ret ret))
-        (refine-steps ret :offset 2 :expand-step cds-diff :exec t :collision-avoid t)
+        (refine-steps ret :offset 1 :expand-step cds-diff :exec t :collision-avoid t)
         (setq *wait-until* (+ (cadr ret) 2 1))
         (ros::ros-info "execute-cb: step refine at ~D" *wait-until*)
         )
@@ -244,6 +371,7 @@
 
 (ros::rate 2)
 (ros::ros-info "simple footstep controller is ready as ~A" (ros::get-name))
+(ros::advertise-service "/footstep_controller/set_gait_generator_param" std_srvs::Empty #'set-gait-generator-param-cb)
 
 (while (ros::ok)
   (send *server* :worker)

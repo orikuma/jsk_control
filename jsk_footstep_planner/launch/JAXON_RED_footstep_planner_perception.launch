@@ -31,16 +31,21 @@
     <remap from="~obstacle_model" to="octomap_point_cloud_centers" />
     <!-- use point cloud (plane estimation) for making footstep -->
     <rosparam>
+      planning_timeout: 30
       use_pointcloud_model: true
       project_start_state: true
       project_goal_state: true
+      heuristic: straight_rotation
     </rosparam>
     <!-- obstacles -->
     <rosparam>
       use_obstacle_model: true
       obstacle_resolution: 0.1
-      collision_bbox_size: [0.4, 1.2, 1.0]
-      collision_bbox_offset: [0, 0, 0.8]
+      collision_bbox_size: [0.4, 1.0, 1.0]
+      #collision_bbox_size: [0.4, 1.2, 1.0]
+      #collision_bbox_size: [0.63, 1.4, 1.0]
+      #collision_bbox_size: [0.6, 1.5, 1.0]
+      collision_bbox_offset: [0.05, 0, 0.8]
     </rosparam>
     <!-- size of foot -->
     <!--

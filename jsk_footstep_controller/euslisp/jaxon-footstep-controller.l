@@ -36,7 +36,7 @@
 ;;     )
 ;;   )
 
-(defun set-gait-generator-param-cb
+(defun set-terrain-param-cb
   (req)
   (let ((res (send req :response)))
     ;; for toe step gait 
@@ -54,9 +54,37 @@
     (send *ri* :stop-st)
     (unix::sleep 3)
     (send *ri* :set-st-param
-        :use-limb-stretch-avoidance t ;; 腰を脚長似あわせて下げるかどうか
-        :limb-length-margin #f(0.145 0.145 0.145 0.145) ;; 伸びきりの脚長からどのくらいマージンを取るか #f(右足 左足 右腕 左腕)
-        :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; 腰変化の速度リミット
+        :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
+        :limb-length-margin #f(0.145 0.145 0.145 0.145) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+        :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; velocity limit of base link for stretch avoidance
+        )
+    (unix::sleep 3)
+    (send *ri* :start-st)
+    res
+    )
+  )
+
+(defun set-default-param-cb
+  (req)
+  (let ((res (send req :response)))
+    ;; for toe step gait 
+    (send *ri* :set-gait-generator-param
+             :toe-angle 0.0 :heel-angle 0.0
+             :toe-heel-phase-ratio #f(0.05 0.25 0.2 0.0 0.2 0.25 0.05)
+             :stair-trajectory-way-point-offset #f(0.03 0.0 0.0)
+             :swing-trajectory-delay-time-offset 0.15
+             :swing-trajectory-final-distance-weight 3.0
+             :default-orbit-type 4
+             :default-step-time 1.2
+             :default-double-support-ratio 0.35
+             :default-step-height 0.065)
+    ;; for kojio base link height modification
+    (send *ri* :stop-st)
+    (unix::sleep 3)
+    (send *ri* :set-st-param
+        :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
+        :limb-length-margin #f(0.13 0.13 0.13 0.13) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+        :limb-stretch-avoidance-vlimit #f(-0.0002 1.000000e-04) ;; velocity limit of base link for stretch avoidance
         )
     (unix::sleep 3)
     (send *ri* :start-st)
@@ -371,7 +399,8 @@
 
 (ros::rate 2)
 (ros::ros-info "simple footstep controller is ready as ~A" (ros::get-name))
-(ros::advertise-service "/footstep_controller/set_gait_generator_param" std_srvs::Empty #'set-gait-generator-param-cb)
+(ros::advertise-service "/footstep_controller/set_terrain_param" std_srvs::Empty #'set-terrain-param-cb)
+(ros::advertise-service "/footstep_controller/set_default_param" std_srvs::Empty #'set-default-param-cb)
 
 (while (ros::ok)
   (send *server* :worker)

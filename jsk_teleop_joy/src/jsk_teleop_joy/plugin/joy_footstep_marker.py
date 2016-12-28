@@ -41,6 +41,10 @@ class JoyFootstepMarker(JoyPose6D):
     self.execute_footstep_srv = rospy.ServiceProxy('/footstep_marker/execute_footstep', Empty)
     rospy.wait_for_service('/footstep_marker/get_footstep_marker_pose')
     self.get_footstep_marker_pose_srv = rospy.ServiceProxy('/footstep_marker/get_footstep_marker_pose', GetTransformableMarkerPose)
+    rospy.wait_for_service('/footstep_controller/set_terrain_param')
+    self.set_terrain_param_srv = rospy.ServiceProxy('/footstep_controller/set_terrain_param', Empty)
+    rospy.wait_for_service('/footstep_controller/set_default_param')
+    self.set_default_param_srv = rospy.ServiceProxy('/footstep_controller/set_default_param', Empty)
 
     # initialize maker pose
     marker_pose = self.getCurrentMarkerPose("movable_footstep_marker")
@@ -63,11 +67,21 @@ class JoyFootstepMarker(JoyPose6D):
         self.pub.publish(self.menu)        
       elif status.circle and not latest.circle:
         self.menu.action = OverlayMenu.ACTION_CLOSE
-        if self.menu.current_index == self.menu.menus.index("Yes"):
-          try:
-            self.execute_footstep_srv()
-          except rospy.ServiceException, e:
-            rospy.logwarn("Execute Footsteps failed: %s", e)
+        # footstep execution menu
+        if self.menu.title == "Execute Footsteps?":
+          if self.menu.current_index == self.menu.menus.index("Yes"):
+            try:
+              self.execute_footstep_srv()
+            except rospy.ServiceException, e:
+              rospy.logwarn("Execute Footsteps failed: %s", e)
+        # footstep mode menu
+        elif self.menu.title == "Change Step Mode":
+          if self.menu.current_index == self.menu.menus.index("Toggle Footstep Marker Mode"):
+            self.toggle_footstep_marker_mode_srv()
+          elif self.menu.current_index == self.menu.menus.index("Set Terrain Parameters"):
+            self.set_terrain_param_srv()
+          elif self.menu.current_index == self.menu.menus.index("Set Default Parameters"):
+            self.set_default_param_srv()
         self.pub.publish(self.menu)
         self.menu = None
       elif status.cross and not latest.cross:
@@ -95,7 +109,12 @@ class JoyFootstepMarker(JoyPose6D):
         self.pre_pose = PoseStamped()
         self.pre_pose.pose.orientation.w = 1
     elif status.start and not latest.start: # toggle footstep_marker mode
-      self.toggle_footstep_marker_mode_srv()
+      # self.toggle_footstep_marker_mode_srv()
+      self.menu = OverlayMenu()
+      self.menu.title = "Change Step Mode"
+      self.menu.menus = ["Toggle Footstep Marker Mode", "Set Terrain Parameters", "Set Default Parameters"]
+      self.menu.current_index = 0
+      self.pub.publish(self.menu)
 
     # synchronize marker_pose, which may be modified by interactive marker
     if self.current_goal_pose == None or not isSamePose(self.current_goal_pose.pose, self.pre_pose.pose):

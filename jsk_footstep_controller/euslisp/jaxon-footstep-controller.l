@@ -8,7 +8,7 @@
 (ros::roseus-add-msgs "nav_msgs")
 
 (setq *step-refine* (ros::get-param "~/use_step_refine"))
-(setq *walking-height* (ros::get-param "~/walking_height" nil))
+(setq *modify-base-height* (ros::get-param "~/modify_base_height" nil))
 
 (load "package://jsk_footstep_controller/euslisp/util.l")
 ;; (load "package://jsk_robot_utils/euslisp/robot-interface-utils.l")
@@ -277,9 +277,10 @@
       (pprint "new steps:")
       (print-readable-coords footstep-coords)
       ;; (setq *original-av* (send *ri* :state :potentio-vector))
-      ;; (walking-pose *original-av* :real t :height *walking-height*)
-      ;; (send *ri* :set-foot-steps-no-wait footstep-coords)
-      (set-footstep-and-base-height-sequence footstep-coords) ;; base link height should be set only once at first :set-foot-steps
+      (if *modify-base-height*
+          (set-footstep-and-base-height-sequence footstep-coords) ;; base link height should be set only once at first :set-foot-steps
+        (send *ri* :set-foot-steps-no-wait footstep-coords)
+        )
       (setq *current-steps* footstep-coords))
     (ros::ros-info "execute-cb: receive new steps ~D" (length *current-steps*))
     (return-from execute-cb2))

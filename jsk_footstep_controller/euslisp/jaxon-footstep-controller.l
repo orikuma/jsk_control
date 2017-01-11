@@ -175,18 +175,18 @@
                        (pprint cds)
                        (> (abs (elt (send cds :worldpos) 2)) step-threshold)))
                  (butlast footstep-coords) (cdr footstep-coords))) ;; list of "is next step is step up/down?" 
-         (prev-pos 0) pos separeted-footsteps)
+         (prev-pos 0) pos separated-footsteps)
     
     ;; separate footsteps by stepping 
     (while (setq pos (position t step-list))
-      (append (subseq footstep-coords prev-pos (min (+ pos 1) (len footstep-coords))) separeted-footsteps)
+      (append (subseq footstep-coords prev-pos (min (+ pos 1) (len footstep-coords))) separated-footsteps)
       (setf (elt step-list pos) nil)
       (setq prev-pos pos)
       )
     (append (subseq footstep-coords prev-pos))
-    (pprint footstep-coords)
-    footstep-coords
-    ))
+    (reverse separated-footsteps)
+    )
+  )
 
 (defun planes-cb (msg)
   (let ((polygons (send msg :polygons)))

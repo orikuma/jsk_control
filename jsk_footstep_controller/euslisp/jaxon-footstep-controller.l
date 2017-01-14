@@ -20,6 +20,8 @@
 (setq *planes* nil)
 (setq *wait-for-plane* t)
 
+(setq *ignore-roll-ptich* (ros::get-param "~/ignore_roll_pitch" nil))
+
 ;; (defun body-down (&key (robot *robot*) (z-pos 0) (crotch-pitch 0) (real t)) ;; 腰を下げる
 ;;   (send robot :reset-pose)
 ;;   (send robot :legs :move-end-pos (float-vector 0 0 z-pos) :local) ;;足が上がるから腰が下がる ;;#f(0 0 z-pos)はエラーをはく
@@ -466,11 +468,25 @@
       ;;   )
       ;; (setq *current-steps* footstep-coords)
 
+      (when *ignore-roll-ptich*
+        (let (tmp-rpy)
+          (dolist (fs footstep-coords)
+            (setq tmp-rpy (car (send fs :rpy-angle))) ;; y p r
+            (send fs :newcoords (make-coords :pos (send fs :pos)
+                                             :rpy (float-vector (elt tmp-rpy 0) 0 0)
+                                             ))
+            )
+          (pprint "ignore roll/pitch:")
+          (print-readable-coords footstep-coords)
+          )
+        )
+
       (pprint "separated steps:")
       (setq *footstep-buffers* (separate-steps footstep-coords))
       (pprint *footstep-buffers*)
       (setq *current-steps* (pop *footstep-buffers*))
       (setq *is-stepping* nil)
+      
       (send *ri* :set-foot-steps-no-wait *current-steps*)
       
       )

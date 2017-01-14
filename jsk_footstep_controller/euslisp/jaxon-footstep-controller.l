@@ -47,7 +47,7 @@
              :swing-trajectory-delay-time-offset 0.20
              :swing-trajectory-final-distance-weight 3.0
              :default-orbit-type :stair
-             :default-step-time 1.3 ;; 1.5
+             :default-step-time 1.5 ;; 1.5
              :default-double-support-ratio 0.2
              :default-step-height 0.05)
 
@@ -55,15 +55,15 @@
     ;; (send *ri* :stop-st)
     ;; (unix::sleep 3)
     
-    (send *ri* :set-st-param
-        :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
-        :limb-length-margin #f(0.14 0.14 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-        :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; velocity limit of base link for stretch avoidance
-        )
-    (send *ri* :set-auto-balancer-param
-        :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
-        :limb-length-margin #f(0.12 0.12 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-        )
+    ;; (send *ri* :set-st-param
+    ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
+    ;;     :limb-length-margin #f(0.14 0.14 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+    ;;     :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; velocity limit of base link for stretch avoidance
+    ;;     )
+    ;; (send *ri* :set-auto-balancer-param
+    ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
+    ;;     :limb-length-margin #f(0.12 0.12 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+    ;;     )
     
     ;; (unix::sleep 3)
     ;; (send *ri* :start-st)
@@ -89,15 +89,15 @@
     ;; (send *ri* :stop-st)
     ;; (unix::sleep 3)
     
-    (send *ri* :set-st-param
-        :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
-        :limb-length-margin #f(0.13 0.13 0.13 0.13) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-        :limb-stretch-avoidance-vlimit #f(-0.0002 1.000000e-04) ;; velocity limit of base link for stretch avoidance
-        )
-    (send *ri* :set-auto-balancer-param
-        :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
-        ) 
-7   
+    ;; (send *ri* :set-st-param
+    ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
+    ;;     :limb-length-margin #f(0.13 0.13 0.13 0.13) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+    ;;     :limb-stretch-avoidance-vlimit #f(-0.0002 1.000000e-04) ;; velocity limit of base link for stretch avoidance
+    ;;     )
+    ;; (send *ri* :set-auto-balancer-param
+    ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
+    ;;     ) 
+   
     ;; (unix::sleep 3)
     ;; (send *ri* :start-st)
     res

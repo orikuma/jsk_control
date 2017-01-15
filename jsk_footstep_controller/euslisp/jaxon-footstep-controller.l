@@ -38,37 +38,72 @@
 ;;     )
 ;;   )
 
+(defun set-terrain-param
+  ()
+  ;; for toe step gait 
+  (send *ri* :set-gait-generator-param
+        :toe-angle 30 :heel-angle 5
+        :toe-heel-phase-ratio #f(0.02 0.28 0.2 0.0 0.2 0.25 0.05)
+        :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
+        :swing-trajectory-delay-time-offset 0.20
+        :swing-trajectory-final-distance-weight 3.0
+        :default-orbit-type :stair
+        :default-step-time 1.5 ;; 1.5
+        :default-double-support-ratio 0.2
+        :default-step-height 0.05)
+
+  ;; for kojio base link height modification
+  ;; (send *ri* :stop-st)
+  ;; (unix::sleep 3)
+  
+  ;; (send *ri* :set-st-param
+  ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
+  ;;     :limb-length-margin #f(0.14 0.14 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+  ;;     :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; velocity limit of base link for stretch avoidance
+  ;;     )
+  ;; (send *ri* :set-auto-balancer-param
+  ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
+  ;;     :limb-length-margin #f(0.12 0.12 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+  ;;     )
+  
+  ;; (unix::sleep 3)
+  ;; (send *ri* :start-st)
+  )
+
+(defun set-default-param
+  ()
+  ;; for toe step gait 
+  (send *ri* :set-gait-generator-param
+        :toe-angle 0.0 :heel-angle 0.0
+        :toe-heel-phase-ratio #f(0.05 0.25 0.2 0.0 0.2 0.25 0.05)
+        :stair-trajectory-way-point-offset #f(0.03 0.0 0.0)
+        :swing-trajectory-delay-time-offset 0.15
+        :swing-trajectory-final-distance-weight 3.0
+        :default-orbit-type 4
+        :default-step-time 1.2
+        :default-double-support-ratio 0.35
+        :default-step-height 0.065)
+  ;; for kojio base link height modification
+  ;; (send *ri* :stop-st)
+  ;; (unix::sleep 3)
+  
+  ;; (send *ri* :set-st-param
+  ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
+  ;;     :limb-length-margin #f(0.13 0.13 0.13 0.13) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
+  ;;     :limb-stretch-avoidance-vlimit #f(-0.0002 1.000000e-04) ;; velocity limit of base link for stretch avoidance
+  ;;     )
+  ;; (send *ri* :set-auto-balancer-param
+  ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
+  ;;     ) 
+  
+  ;; (unix::sleep 3)
+  ;; (send *ri* :start-st)
+  )
+
 (defun set-terrain-param-cb
   (req)
   (let ((res (send req :response)))
-    ;; for toe step gait 
-    (send *ri* :set-gait-generator-param
-             :toe-angle 30 :heel-angle 5
-             :toe-heel-phase-ratio #f(0.02 0.28 0.2 0.0 0.2 0.25 0.05)
-             :stair-trajectory-way-point-offset #f(0.03 -0.0 0)
-             :swing-trajectory-delay-time-offset 0.20
-             :swing-trajectory-final-distance-weight 3.0
-             :default-orbit-type :stair
-             :default-step-time 1.5 ;; 1.5
-             :default-double-support-ratio 0.2
-             :default-step-height 0.05)
-
-    ;; for kojio base link height modification
-    ;; (send *ri* :stop-st)
-    ;; (unix::sleep 3)
-    
-    ;; (send *ri* :set-st-param
-    ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
-    ;;     :limb-length-margin #f(0.14 0.14 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-    ;;     :limb-stretch-avoidance-vlimit #f(-20e-5 1e-5) ;; velocity limit of base link for stretch avoidance
-    ;;     )
-    ;; (send *ri* :set-auto-balancer-param
-    ;;     :use-limb-stretch-avoidance t ;; put base link down when the support leg is streching
-    ;;     :limb-length-margin #f(0.12 0.12 0 0) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-    ;;     )
-    
-    ;; (unix::sleep 3)
-    ;; (send *ri* :start-st)
+    (set-terrain-param)
     res
     )
   )
@@ -76,32 +111,7 @@
 (defun set-default-param-cb
   (req)
   (let ((res (send req :response)))
-    ;; for toe step gait 
-    (send *ri* :set-gait-generator-param
-             :toe-angle 0.0 :heel-angle 0.0
-             :toe-heel-phase-ratio #f(0.05 0.25 0.2 0.0 0.2 0.25 0.05)
-             :stair-trajectory-way-point-offset #f(0.03 0.0 0.0)
-             :swing-trajectory-delay-time-offset 0.15
-             :swing-trajectory-final-distance-weight 3.0
-             :default-orbit-type 4
-             :default-step-time 1.2
-             :default-double-support-ratio 0.35
-             :default-step-height 0.065)
-    ;; for kojio base link height modification
-    ;; (send *ri* :stop-st)
-    ;; (unix::sleep 3)
-    
-    ;; (send *ri* :set-st-param
-    ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
-    ;;     :limb-length-margin #f(0.13 0.13 0.13 0.13) ;; mergin from support leg stretching limit #f(rleg lleg rarm larm)
-    ;;     :limb-stretch-avoidance-vlimit #f(-0.0002 1.000000e-04) ;; velocity limit of base link for stretch avoidance
-    ;;     )
-    ;; (send *ri* :set-auto-balancer-param
-    ;;     :use-limb-stretch-avoidance nil ;; put base link down when the support leg is streching
-    ;;     ) 
-   
-    ;; (unix::sleep 3)
-    ;; (send *ri* :start-st)
+    (set-default-param)
     res
     )
   )
@@ -486,7 +496,8 @@
       (pprint *footstep-buffers*)
       (setq *current-steps* (pop *footstep-buffers*))
       (setq *is-stepping* nil)
-      
+
+      (set-default-param)
       (send *ri* :set-foot-steps-no-wait *current-steps*)
       
       )
@@ -587,11 +598,13 @@
               (if *is-stepping*
                   (progn
                     ;; base link up
+                    (set-default-param)
                     (send *robot* :legs :move-end-pos #f(0 0 -80))
                     (setq *is-stepping* nil)
                     )
                 (progn
                   ;; base link down
+                  (set-terrain-param)
                   (send *robot* :legs :move-end-pos #f(0 0 80))
                   (setq *is-stepping* t)
                   )
@@ -608,6 +621,7 @@
               (setq *is-stepping* nil)
               (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
               (send *ri* :wait-interpolation)
+              (set-default-param)
               )
             (send server :set-succeeded (send server :result))
             )

@@ -63,7 +63,8 @@
       ## without padding
       ##footstep_size_x: 0.230
       footstep_size_x: 0.260 ## add toe padding
-      footstep_size_y: 0.135
+      # footstep_size_y: 0.135
+      footstep_size_y: 0.150 ## add padding to avoid collsion
     </rosparam>
     <!-- parameters for plane estimation -->
     <rosparam subst_value="true">
@@ -86,7 +87,7 @@
       local_move_x_num: 1
       local_move_y_num: 0
       local_move_theta_num: 0
-      local_move_x_offset: 0.14
+      local_move_x_offset: 0.12 # local_move_x_offset: 0.14
       local_move_y_offset: 0.0
       local_move_theta_offset: 0.0
     </rosparam>
@@ -134,9 +135,9 @@
         y: 0.02
         theta: 0
 # froward
-      - x: 0.16
-        y: 0
-        theta: 0
+#      - x: 0.16
+#        y: 0
+#        theta: 0
       - x: 0.10
         y: 0
         theta: 0
@@ -204,7 +205,7 @@
 
   <!-- footstep marker -->
   <group if="$(arg use_footstep_marker)">
-    <node pkg="jsk_footstep_planner" type="footstep_marker" name="footstep_marker" output="screen">
+    <node pkg="jsk_footstep_planner" type="footstep_marker" name="footstep_marker" output="screen" respawn="true">
       <remap from="/footstep_controller" to="jaxon_footstep_controller"/>
       <rosparam subst_value="true">
         disable_tf: false
@@ -221,6 +222,7 @@
         use_step_refine: true
         plane_projection: $(arg use_footstep_plane_detection)
         modify_base_height: false
+        ignore_roll_pitch: true
       </rosparam>
       <remap from="~planes" to="/footstep_plane_plane_rejector/output_polygons"/>
     </node>

@@ -201,9 +201,10 @@ You can create `*ri*' like
 (defun check-footstep-collision (current next &key (debug nil))
   ;; fix next footstep to avoid collision
   ;; return original next footstep if current and next would not cause collision
-  (let ((current-foot (make-cube 235 135 20))
-        (next-foot (make-cube 235 135 20)))
-
+  ;; (let ((current-foot (make-cube 235 135 20))
+  ;;       (next-foot (make-cube 235 135 20)))
+  (let ((current-foot (make-cube 250 150 20)) ;; add offset to avoid collision 
+        (next-foot (make-cube 250 150 20)))
     (send current-foot :move-to (send current :coords) :world)
     (send next-foot :move-to (send next :coords) :world)
     (let ((dy 0))

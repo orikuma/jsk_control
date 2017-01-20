@@ -599,13 +599,13 @@
                   (progn
                     ;; base link up
                     (set-default-param)
-                    (send *robot* :legs :move-end-pos #f(0 0 -80))
+                    (send *robot* :legs :move-end-pos #f(0 0 -100))
                     (setq *is-stepping* nil)
                     )
                 (progn
                   ;; base link down
                   (set-terrain-param)
-                  (send *robot* :legs :move-end-pos #f(0 0 80))
+                  (send *robot* :legs :move-end-pos #f(0 0 100))
                   (setq *is-stepping* t)
                   )
                 )
@@ -617,7 +617,7 @@
           (progn
             (when *is-stepping*
               (send *robot* :angle-vector (send *ri* :state :reference-vector))
-              (send *robot* :legs :move-end-pos #f(0 0 -80))
+              (send *robot* :legs :move-end-pos #f(0 0 -100))
               (setq *is-stepping* nil)
               (send *ri* :angle-vector (send *robot* :angle-vector) 3000)
               (send *ri* :wait-interpolation)
@@ -641,6 +641,16 @@
       (ros::spin-once)
 
       (setq cds-diff (calc-step-error-on-map (car ret) map-dest))
+
+      ;; (when (and *ignore-roll-ptich* cds-diff)
+      ;;   (let (tmp-rpy)
+      ;;     (setq tmp-rpy (car (send cds-diff :rpy-angle))) ;; y p r
+      ;;     (send cds-diff :newcoords (make-coords :pos (send cds-diff :pos)
+      ;;                                            :rpy (float-vector (elt tmp-rpy 0) 0 0)
+      ;;                                            ))
+      ;;     (pprint (list 'ignored-diff cds-diff))
+      ;;     )
+      ;;   )
 
       (when (and (> (length (car ret)) 6) ;; offset + 4
                  (or (not *wait-until*)

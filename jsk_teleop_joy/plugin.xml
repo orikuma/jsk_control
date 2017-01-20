@@ -30,4 +30,6 @@
   </class>
   <class name="JoyCmdVel" type="jsk_teleop_joy.plugin.joy_cmd_vel.JoyCmdVel">
   </class>
+  <class name="JoyServiceCall" type="jsk_teleop_joy.plugin.joy_service_call.JoyServiceCall">
+  </class>
 </library>

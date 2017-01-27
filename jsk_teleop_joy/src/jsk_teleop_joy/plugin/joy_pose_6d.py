@@ -31,14 +31,14 @@ class JoyPose6D(RVizViewController):
     self.pre_pose.pose.orientation.w = 1
     self.prev_time = rospy.Time.from_sec(time.time())
     self.publish_pose = self.getArg('publish_pose', True)
-    self.frame_id = self.getArg('frame_id', '/map')
+    self.frame_id = self.getArg('frame_id', 'map')
     if self.publish_pose:
       self.pose_pub = rospy.Publisher(self.getArg('pose', 'pose'), 
                                       PoseStamped)
     self.supportFollowView(True)
 
     self.puse_sub = rospy.Subscriber(self.getArg('set_pose', 'set_pose'), PoseStamped, self.setPoseCB)
-    self.frame_id = rospy.get_param('~frame_id', '/map')
+    # self.frame_id = rospy.get_param('~frame_id', 'map')
     self.tf_listener = tf.TransformListener()
 
   def setPoseCB(self, pose):

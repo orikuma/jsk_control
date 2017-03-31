@@ -64,7 +64,7 @@
       ##footstep_size_x: 0.230
       footstep_size_x: 0.260 ## add toe padding
       # footstep_size_y: 0.135
-      footstep_size_y: 0.150 ## add padding to avoid collsion
+      footstep_size_y: 0.180 ## add padding to avoid collsion
     </rosparam>
     <!-- parameters for plane estimation -->
     <rosparam subst_value="true">

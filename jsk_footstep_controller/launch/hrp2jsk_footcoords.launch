@@ -5,6 +5,9 @@
         name="footcoords"
         if="$(arg use_footcoords)"
         >
+    <param name="~publish_odom_tf" value="true"/>
+    <param name="~invert_odom_init" value="false"/>
+    <param name="~invert_odom" value="true"/>    
   </node>
 
   <node pkg="jsk_footstep_controller"

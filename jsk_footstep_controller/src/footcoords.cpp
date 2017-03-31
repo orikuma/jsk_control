@@ -77,11 +77,12 @@ namespace jsk_footstep_controller
     pnh.param("body_on_odom_frame", body_on_odom_frame_, std::string("body_on_odom"));
     pnh.param("odom_init_frame_id", odom_init_frame_id_, std::string("odom_init"));
     pnh.param("invert_odom_init", invert_odom_init_, true);
+    pnh.param("invert_odom", invert_odom_, false);    
     pnh.param("lfoot_frame_id", lfoot_frame_id_,
               std::string("lleg_end_coords"));
     pnh.param("rfoot_frame_id", rfoot_frame_id_,
               std::string("rleg_end_coords"));
-    pnh.param("publish_odom_tf", publish_odom_tf_, true);
+    pnh.param("publish_odom_tf", publish_odom_tf_, false);
     urdf::Model robot_model;
     KDL::Tree tree;
     robot_model.initParam("robot_description");
@@ -968,8 +969,13 @@ namespace jsk_footstep_controller
     ros_ground_coords.header.frame_id = parent_frame_id_;
     ros_ground_coords.child_frame_id = output_frame_id_;
     ros_odom_to_body_coords.header.stamp = stamp;
-    ros_odom_to_body_coords.header.frame_id = parent_frame_id_;
-    ros_odom_to_body_coords.child_frame_id = root_frame_id_;
+    if (invert_odom_) {
+      ros_odom_to_body_coords.header.frame_id = root_frame_id_;
+      ros_odom_to_body_coords.child_frame_id = parent_frame_id_;
+    } else {
+      ros_odom_to_body_coords.header.frame_id = parent_frame_id_;
+      ros_odom_to_body_coords.child_frame_id = root_frame_id_;
+    }
     ros_body_on_odom_coords.header.stamp = stamp;
     ros_body_on_odom_coords.header.frame_id = root_frame_id_;
     ros_body_on_odom_coords.child_frame_id = body_on_odom_frame_;
@@ -998,7 +1004,11 @@ namespace jsk_footstep_controller
     tf::transformTFToMsg(midcoords_, ros_midcoords.transform);
     tf::transformEigenToMsg(identity, ros_ground_coords.transform);
     tf::transformEigenToMsg(body_on_odom_pose.inverse(), ros_body_on_odom_coords.transform);
-    tf::transformEigenToMsg(odom_pose_, ros_odom_to_body_coords.transform);
+    if (invert_odom_) {    
+      tf::transformEigenToMsg(odom_pose_.inverse(), ros_odom_to_body_coords.transform);
+    } else {
+      tf::transformEigenToMsg(odom_pose_, ros_odom_to_body_coords.transform);
+    }
     if (invert_odom_init_) {
       tf::transformEigenToMsg(odom_init_pose.inverse(), ros_odom_init_coords.transform);
     } else {
@@ -1007,7 +1017,9 @@ namespace jsk_footstep_controller
     std::vector<geometry_msgs::TransformStamped> tf_transforms;
     tf_transforms.push_back(ros_midcoords);
     tf_transforms.push_back(ros_ground_coords);
-    tf_transforms.push_back(ros_odom_to_body_coords);
+    if (publish_odom_tf_) {
+      tf_transforms.push_back(ros_odom_to_body_coords);
+    }
     tf_transforms.push_back(ros_body_on_odom_coords);
     tf_transforms.push_back(ros_odom_init_coords);
     tf_broadcaster_.sendTransform(tf_transforms);

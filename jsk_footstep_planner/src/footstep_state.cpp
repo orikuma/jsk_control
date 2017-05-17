@@ -324,11 +324,51 @@ namespace jsk_footstep_planner
       // plane
       // DEBUG_PRINT( "[FS state] no enough inliners" );
       Eigen::Vector3f n = plane.getNormal();
+      // ignore vertical footstep
       Eigen::Vector3f x = pose_.matrix().block<3, 3>(0, 0) * Eigen::Vector3f::UnitX();
       if (acos(n.dot(x)) == 0) {
         error_state = projection_state::vertical_footstep;
         return FootstepState::Ptr();
       }
+
+      // found obstacles in margin region
+      if (!parameters.skip_cropping) {        
+        // for (unsigned int i=0; i<inliers->indices.size(); i++){
+        unsigned int count = 0;
+        for (unsigned int i = 0; i<inliers->indices.size(); i++){
+          pcl::PointNormal tmp_pt = cloud->points[inliers->indices[i]];
+          Eigen::Vector3f tmp_ptx(tmp_pt.x, tmp_pt.y, tmp_pt.z);
+          if (plane.signedDistanceToPoint(tmp_ptx) > 0.02) {
+            count++;
+            // std::cerr << "found obstacle in margin region: " << count << std::endl;
+            if (count > 5) {
+              // std::cerr << "found obstacle in margin region: " << count << std::endl;
+              error_state = projection_state::no_enough_support;
+              return FootstepState::Ptr();
+            }
+          }
+        }
+      }
+      // if (!parameters.skip_cropping) {        
+      //   Eigen::Vector3f p(0, 0, -coefficients->values[3] / coefficients->values[2]);
+      //   // for (unsigned int i=0; i<inliers->indices.size(); i++){
+      //   unsigned int count = 0;
+      //   for (unsigned int i=0; i<inliers->indices.size(); i++){
+      //     pcl::PointNormal pt = cloud->points[inliers->indices[i]];
+      //     Eigen::Vector3f ptx(pt.x, pt.y, pt.z);
+      //     if ((ptx - p).dot(n) > 0.02) {
+      //       count++;
+      //       // std::cerr << "found obstacle in margin region: " << count << std::endl;
+      //       if (count > 5) {
+      //         // std::cerr << "found obstacle in margin region: " << count << std::endl;
+      //         error_state = projection_state::no_enough_support;
+      //         return FootstepState::Ptr();
+      //       }
+      //     }
+      //   }
+      // }
+
+      // project footstep
       Eigen::Vector3f rotation_axis = n.cross(x).normalized();
       Eigen::Vector3f new_x = Eigen::AngleAxisf(M_PI / 2.0, rotation_axis) * n;
       if (acos(new_x.dot(x)) > M_PI / 2.0) {
@@ -347,6 +387,8 @@ namespace jsk_footstep_planner
       // std::cout << "q: " << std::endl << q << std::endl;
       // std::cout << "new_rot_mat: " << std::endl << new_rot_mat << std::endl;
       //Eigen::Affine3f new_pose = new_rot * Eigen::Translation3f(q);
+
+      
       // check is it enough points to support the footstep
 #if DEBUG
       visualization_msgs::Marker marker;

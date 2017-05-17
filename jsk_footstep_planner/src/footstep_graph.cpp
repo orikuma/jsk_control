@@ -304,7 +304,7 @@ namespace jsk_footstep_planner
           for (size_t j = 0; j < locally_moved_nodes.size(); j++) {
             if (isSuccessable(locally_moved_nodes[j], target_state)) {
               FootstepGraph::StatePtr tmp = projectFootstep(locally_moved_nodes[j], error_state);
-              if(!!tmp) {
+              if(tmp) {
                 ret.push_back(tmp);
               }
             }

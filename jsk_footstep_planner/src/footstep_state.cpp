@@ -333,40 +333,21 @@ namespace jsk_footstep_planner
 
       // found obstacles in margin region
       if (!parameters.skip_cropping) {        
-        // for (unsigned int i=0; i<inliers->indices.size(); i++){
         unsigned int count = 0;
-        for (unsigned int i = 0; i<inliers->indices.size(); i++){
+        for (unsigned int i = 0; i < inliers->indices.size(); i++) {
           pcl::PointNormal tmp_pt = cloud->points[inliers->indices[i]];
           Eigen::Vector3f tmp_ptx(tmp_pt.x, tmp_pt.y, tmp_pt.z);
           if (plane.signedDistanceToPoint(tmp_ptx) > 0.02) {
             count++;
-            // std::cerr << "found obstacle in margin region: " << count << std::endl;
-            if (count > 5) {
-              // std::cerr << "found obstacle in margin region: " << count << std::endl;
-              error_state = projection_state::no_enough_support;
-              return FootstepState::Ptr();
-            }
           }
         }
+        DEBUG_PRINT("[FS state] obstacles points: " << count << "/" << inliers->indices.size());
+        if (count > 5) {
+          // std::cerr << "found obstacle in margin region: " << count << std::endl;
+          error_state = projection_state::no_enough_support;
+          return FootstepState::Ptr();
+        }        
       }
-      // if (!parameters.skip_cropping) {        
-      //   Eigen::Vector3f p(0, 0, -coefficients->values[3] / coefficients->values[2]);
-      //   // for (unsigned int i=0; i<inliers->indices.size(); i++){
-      //   unsigned int count = 0;
-      //   for (unsigned int i=0; i<inliers->indices.size(); i++){
-      //     pcl::PointNormal pt = cloud->points[inliers->indices[i]];
-      //     Eigen::Vector3f ptx(pt.x, pt.y, pt.z);
-      //     if ((ptx - p).dot(n) > 0.02) {
-      //       count++;
-      //       // std::cerr << "found obstacle in margin region: " << count << std::endl;
-      //       if (count > 5) {
-      //         // std::cerr << "found obstacle in margin region: " << count << std::endl;
-      //         error_state = projection_state::no_enough_support;
-      //         return FootstepState::Ptr();
-      //       }
-      //     }
-      //   }
-      // }
 
       // project footstep
       Eigen::Vector3f rotation_axis = n.cross(x).normalized();

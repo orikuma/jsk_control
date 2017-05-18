@@ -304,7 +304,7 @@ namespace jsk_footstep_planner
           for (size_t j = 0; j < locally_moved_nodes.size(); j++) {
             if (isSuccessable(locally_moved_nodes[j], target_state)) {
               FootstepGraph::StatePtr tmp = projectFootstep(locally_moved_nodes[j], error_state);
-              if(tmp) {
+              if(tmp && isSuccessable(tmp, target_state)) {
                 ret.push_back(tmp);
               }
             }
@@ -312,10 +312,8 @@ namespace jsk_footstep_planner
         }
         next = tmpnext;
       }
-      if (!!next) {
-        if (isSuccessable(next, target_state)) {
-          ret.push_back(next);
-        }
+      if (next && isSuccessable(next, target_state)) {
+        ret.push_back(next);
       }
     }
     return true;

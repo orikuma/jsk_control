@@ -858,6 +858,22 @@ namespace jsk_footstep_planner
       resolution_theta_ = config.resolution_theta;
       need_to_rebuild_graph = true;
     }
+
+    if (parameters_.plane_estimation_use_normal != config.plane_estimation_use_normal ||
+        parameters_.plane_estimation_normal_distance_weight != config.plane_estimation_normal_distance_weight ||
+        parameters_.plane_estimation_normal_opening_angle != config.plane_estimation_normal_opening_angle ||
+        parameters_.plane_estimation_min_ratio_of_inliers != config.plane_estimation_min_ratio_of_inliers ||
+        parameters_.plane_estimation_max_iterations != config.plane_estimation_max_iterations ||
+        parameters_.plane_estimation_min_inliers != config.plane_estimation_min_inliers ||
+        parameters_.plane_estimation_outlier_threshold != config.plane_estimation_outlier_threshold ||
+        parameters_.support_check_x_sampling != config.support_check_x_sampling ||
+        parameters_.support_check_y_sampling != config.support_check_y_sampling ||
+        parameters_.support_check_vertex_neighbor_threshold != config.support_check_vertex_neighbor_threshold ||
+        parameters_.support_padding_x != config.support_padding_x ||
+        parameters_.support_padding_y != config.support_padding_y) {
+      need_to_rebuild_graph = true;
+    }
+    
     planning_timeout_ = config.planning_timeout;
     rich_profiling_ = config.rich_profiling;
     parameters_.use_transition_limit = config.use_transition_limit;
